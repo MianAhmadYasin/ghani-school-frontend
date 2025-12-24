@@ -1,5 +1,8 @@
 import axios from 'axios'
 
+// Backend API URL - Set NEXT_PUBLIC_API_URL in Vercel environment variables
+// Production: https://web-production-91537.up.railway.app/api/v1
+// Development: http://localhost:8000/api/v1
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
 // Create axios instance

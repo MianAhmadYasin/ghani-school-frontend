@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone', // Enable standalone output for Docker
+  // Note: output: 'standalone' is not needed for Vercel (only for Docker/self-hosted)
   images: {
     domains: ['localhost'],
     remotePatterns: [
