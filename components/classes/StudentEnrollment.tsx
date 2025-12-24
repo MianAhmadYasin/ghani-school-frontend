@@ -23,6 +23,17 @@ export function StudentEnrollment({ classData, onClose }: StudentEnrollmentProps
   const [search, setSearch] = useState('')
   const [selectedStudent, setSelectedStudent] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+  }>({
+    open: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  })
   const queryClient = useQueryClient()
 
   // Get students in this class
@@ -227,6 +238,16 @@ export function StudentEnrollment({ classData, onClose }: StudentEnrollmentProps
           </div>
         </CardContent>
       </Card>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.onConfirm}
+        variant="destructive"
+      />
     </div>
   )
 }

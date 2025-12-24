@@ -40,6 +40,17 @@ export function SalaryCalculator() {
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([])
   const [previewTeacherId, setPreviewTeacherId] = useState<string | null>(null)
   const [previewData, setPreviewData] = useState<any>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+  }>({
+    open: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  })
 
   // Fetch teachers
   const { data: teachers = [] } = useQuery({
@@ -516,6 +527,16 @@ export function SalaryCalculator() {
           )}
         </CardContent>
       </Card>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.onConfirm}
+        variant="default"
+      />
     </div>
   )
 }
