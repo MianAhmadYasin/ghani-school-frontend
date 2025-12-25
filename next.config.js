@@ -1,3 +1,5 @@
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -19,6 +21,21 @@ const nextConfig = {
   // Linting should be run locally or in CI separately (npm run lint).
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  // Webpack configuration for path aliases
+  webpack: (config) => {
+    const rootPath = path.resolve(__dirname)
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': rootPath,
+    }
+    // Ensure extensions are resolved correctly
+    config.resolve.extensions = [
+      ...config.resolve.extensions,
+      '.ts',
+      '.tsx',
+    ]
+    return config
   },
   // Security headers (some are handled by middleware)
   async headers() {
