@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useForm } from 'react-hook-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -58,7 +58,6 @@ export function DonationForm({ onClose, onSuccess, initialData }: DonationFormPr
         date: typeof data.date === 'string' ? data.date : new Date(data.date).toISOString().split('T')[0],
         amount: Number(data.amount)
       };
-      console.log('🚀 FINAL update donation data to API:', safeData);
       return financeService.updateDonation(initialData.id, safeData);
     },
     onSuccess: () => {
@@ -74,8 +73,6 @@ export function DonationForm({ onClose, onSuccess, initialData }: DonationFormPr
   })
 
   const onSubmit = (data: DonationFormData) => {
-    console.log('📝 Donation form data before conversion:', data);
-    console.log('📅 Date value:', data.date, 'Type:', typeof data.date);
     
     // Robust date conversion to YYYY-MM-DD format
     let dateString: string;
@@ -110,7 +107,6 @@ export function DonationForm({ onClose, onSuccess, initialData }: DonationFormPr
       dateString = new Date().toISOString().split('T')[0];
     }
     
-    console.log('✅ Converted date string:', dateString);
     
     const formattedData = {
       donor_name: data.donor_name,
@@ -120,7 +116,6 @@ export function DonationForm({ onClose, onSuccess, initialData }: DonationFormPr
       receipt_number: data.receipt_number
     }
     
-    console.log('📤 Sending to API:', formattedData);
     
     if (initialData) {
       updateMutation.mutate(formattedData)
@@ -234,6 +229,7 @@ export function DonationForm({ onClose, onSuccess, initialData }: DonationFormPr
     </div>
   )
 }
+
 
 
 

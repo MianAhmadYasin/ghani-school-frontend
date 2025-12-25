@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -25,8 +25,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Clear session helper
   const clearSession = useCallback(() => {
-    console.log('🔴 CLEARING SESSION - User being logged out')
-    console.trace('Clear session called from:')
     
     localStorage.removeItem('access_token')
     localStorage.removeItem('user')
@@ -38,25 +36,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setUser(null)
     setIsAuthenticated(false)
-    console.log('❌ Session cleared - user logged out')
   }, [])
 
   // Load session from storage
   const loadSession = useCallback(async () => {
-    console.log('🔵 Loading session from storage...')
     try {
       const token = localStorage.getItem('access_token')
       const storedUser = localStorage.getItem('user')
       const authTimestamp = localStorage.getItem('auth_timestamp')
-
-      console.log('🔍 Session check:', {
-        hasToken: !!token,
-        hasUser: !!storedUser,
-        hasTimestamp: !!authTimestamp
-      })
+      
 
       if (!token || !storedUser) {
-        console.log('⚠️ No token or user found in storage')
         setIsLoading(false)
         return
       }
@@ -67,10 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const maxAge = 30 * 24 * 60 * 60 * 1000 // 30 days
         const daysOld = (tokenAge / (24 * 60 * 60 * 1000)).toFixed(1)
 
-        console.log(`📅 Session age: ${daysOld} days (max: 30 days)`)
 
         if (tokenAge > maxAge) {
-          console.log('❌ Session expired (> 30 days)')
           clearSession()
           setIsLoading(false)
           return
@@ -91,13 +79,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      console.log('✅ User loaded from storage:', parsedUser.email, parsedUser.role)
       
       // Set user immediately from storage (fast app start)
       setUser(parsedUser)
       setIsAuthenticated(true)
       setIsLoading(false)
-      console.log('✅ Session restored! User is logged in.')
       
       // REMOVED: Backend verification - causes session clearing issues
       // We trust the stored token unless explicitly invalidated
@@ -110,17 +96,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize session on mount - only once
   useEffect(() => {
-    console.log('🔵 AuthContext: Initializing session...')
     loadSession()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Intentionally empty - only run once on mount
 
   const login = async (email: string, password: string) => {
-    console.log('🔐 Login attempt for:', email)
     try {
       setIsLoading(true)
       const response = await authService.login(email, password)
-      console.log('✅ Login API response received:', { hasToken: !!response.access_token, hasUser: !!response.user })
       
       // Validate response structure
       if (!response || !response.access_token || !response.user) {
@@ -143,14 +126,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Invalid user data in login response')
       }
 
-      console.log('👤 User data validated:', userData.email, userData.role)
 
       // Store in localStorage
       try {
         localStorage.setItem('access_token', response.access_token)
         localStorage.setItem('user', JSON.stringify(userData))
         localStorage.setItem('auth_timestamp', Date.now().toString())
-        console.log('💾 Session stored in localStorage')
       } catch (storageError) {
         console.error('❌ Failed to store session:', storageError)
         throw new Error('Failed to save session. Please check browser storage permissions.')
@@ -162,7 +143,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const secure = isHttps ? '; Secure' : ''
         const maxAge = 30 * 24 * 60 * 60 // 30 days
         document.cookie = `access_token=${response.access_token}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`
-        console.log('🍪 Session cookie set')
       } catch (cookieError) {
         console.warn('⚠️ Failed to set cookie:', cookieError)
         // Non-fatal, continue with localStorage only
@@ -170,7 +150,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(userData)
       setIsAuthenticated(true)
-      console.log('✅ User state updated - authentication complete!')
 
       // Redirect based on role
       const redirectPaths: Record<string, string> = {
@@ -181,7 +160,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       const redirectPath = redirectPaths[userData.role] || '/admin/dashboard'
-      console.log('➡️ Redirecting to:', redirectPath)
       
       // Use router.replace to avoid adding to history
       router.replace(redirectPath)
@@ -213,10 +191,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [clearSession, router])
 
   const refreshSession = async () => {
-    console.log('🔄 Refreshing session...')
     try {
       const currentUser = await authService.getCurrentUser()
-      console.log('✅ Session refreshed successfully')
       setUser(currentUser)
       localStorage.setItem('user', JSON.stringify(currentUser))
       localStorage.setItem('auth_timestamp', Date.now().toString())
@@ -246,4 +222,5 @@ export function useAuth() {
   }
   return context
 }
+
 

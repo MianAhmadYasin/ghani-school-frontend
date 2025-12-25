@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React from 'react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -9,7 +9,6 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
 
-  console.log('🛡️ AuthGate check:', { pathname, isLoading, isAuthenticated, hasUser: !!user })
 
   // Protected routes that require authentication
   const protectedPrefixes = ['/admin', '/teacher', '/student', '/principal']
@@ -21,7 +20,6 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   // Show loading spinner while checking auth (only on initial load)
   if (isLoading) {
-    console.log('⏳ AuthGate: Loading session...')
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -34,7 +32,6 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   // Redirect to login ONLY if accessing protected route without auth
   if (isProtectedRoute && !isAuthenticated && !isLoading) {
-    console.log('⚠️ Protected route without auth - redirecting to login')
     router.push('/login')
     return null
   }
@@ -48,13 +45,13 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       student: '/student/dashboard',
     }
     const redirectPath = dashboardPaths[user.role] || '/admin/dashboard'
-    console.log('✅ Already authenticated - redirecting to:', redirectPath)
     router.push(redirectPath)
     return null
   }
 
-  console.log('✅ AuthGate: Rendering page')
   return <>{children}</>
 }
+
+
 
 

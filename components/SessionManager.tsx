@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -14,7 +14,6 @@ export default function SessionManager() {
     const heartbeat = setInterval(() => {
       // Just update the timestamp to keep session fresh
       localStorage.setItem('auth_timestamp', Date.now().toString())
-      console.log('💓 Session heartbeat - keeping session alive')
     }, 5 * 60 * 1000) // 5 minutes
 
     return () => clearInterval(heartbeat)
@@ -23,3 +22,4 @@ export default function SessionManager() {
   // This component doesn't render anything visible
   return null
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useForm } from 'react-hook-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -56,7 +56,6 @@ export function ExpenseForm({ onClose, onSuccess, initialData }: ExpenseFormProp
         date: typeof data.date === 'string' ? data.date : new Date(data.date).toISOString().split('T')[0],
         amount: Number(data.amount)
       };
-      console.log('🚀 FINAL update data to API:', safeData);
       return financeService.updateExpense(initialData.id, safeData);
     },
     onSuccess: () => {
@@ -72,8 +71,6 @@ export function ExpenseForm({ onClose, onSuccess, initialData }: ExpenseFormProp
   })
 
   const onSubmit = (data: ExpenseFormData) => {
-    console.log('📝 Form data before conversion:', data);
-    console.log('📅 Date value:', data.date, 'Type:', typeof data.date);
     
     // Robust date conversion to YYYY-MM-DD format
     let dateString: string;
@@ -108,7 +105,6 @@ export function ExpenseForm({ onClose, onSuccess, initialData }: ExpenseFormProp
       dateString = new Date().toISOString().split('T')[0];
     }
     
-    console.log('✅ Converted date string:', dateString);
     
     const formattedData = {
       category: data.category,
@@ -117,7 +113,6 @@ export function ExpenseForm({ onClose, onSuccess, initialData }: ExpenseFormProp
       date: dateString
     }
     
-    console.log('📤 Sending to API:', formattedData);
     
     if (initialData) {
       updateMutation.mutate(formattedData)
@@ -233,6 +228,7 @@ export function ExpenseForm({ onClose, onSuccess, initialData }: ExpenseFormProp
     </div>
   )
 }
+
 
 
 
