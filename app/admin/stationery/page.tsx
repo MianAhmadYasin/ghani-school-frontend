@@ -11,12 +11,25 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, Edit, Trash2, X, Package, AlertTriangle } from 'lucide-react'
 import { financeService } from '@/services/financeService'
 import { Badge } from '@/components/ui/badge'
+import { toast } from '@/components/ui/toast'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 export default function StationeryPage() {
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+  }>({
+    open: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  })
   const queryClient = useQueryClient()
 
   // Form state matching database schema
@@ -418,6 +431,16 @@ export default function StationeryPage() {
             </Card>
           </div>
         )}
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          open={confirmDialog.open}
+          onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          onConfirm={confirmDialog.onConfirm}
+          variant="destructive"
+        />
       </div>
     </DashboardLayout>
   )

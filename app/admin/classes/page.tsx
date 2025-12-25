@@ -20,6 +20,8 @@ import { ClassForm } from '@/components/classes/ClassForm'
 import { StudentEnrollment } from '@/components/classes/StudentEnrollment'
 import { Class, Teacher, Student, Grade } from '@/types'
 import { useEffect } from 'react'
+import { toast } from '@/components/ui/toast'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 export default function ClassesPage() {
   const router = useRouter()
@@ -32,6 +34,17 @@ export default function ClassesPage() {
   const [showEnrollment, setShowEnrollment] = useState(false)
   const [enrollmentClass, setEnrollmentClass] = useState<Class | null>(null)
   const [teachers, setTeachers] = useState<Teacher[]>([])
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+  }>({
+    open: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  })
   const queryClient = useQueryClient()
 
   const selectedTeacherId = searchParams.get('teacher_id')
@@ -500,6 +513,16 @@ export default function ClassesPage() {
             onClose={() => setShowEnrollment(false)}
           />
         )}
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          open={confirmDialog.open}
+          onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          onConfirm={confirmDialog.onConfirm}
+          variant="destructive"
+        />
       </div>
     </DashboardLayout>
   )

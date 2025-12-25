@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FileText, Plus, Search, Filter, Calendar, Download, Edit, Trash2, Upload, BookOpen, GraduationCap } from "lucide-react";
 import { paperService, Paper, PaperCreate, PaperStats } from "@/services/paperService";
+import { toast } from "@/components/ui/toast";
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 interface PaperFormData {
   class_id: string;
@@ -47,6 +49,17 @@ export default function TeacherPapersPage() {
   const [editingPaper, setEditingPaper] = useState<Paper | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+  }>({
+    open: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     fetchPapers();
@@ -404,6 +417,16 @@ export default function TeacherPapersPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.onConfirm}
+        variant="destructive"
+      />
     </div>
   );
 }
@@ -498,7 +521,7 @@ function PaperFormDialog({
       return;
     }
 
-    let finalFormData = { ...formData };
+    const finalFormData = { ...formData };
     
     if (uploadedFile) {
       setIsUploading(true);

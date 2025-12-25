@@ -18,6 +18,8 @@ import { Plus, Search, Edit, Trash2, Eye, X, BookOpen, Users, Calendar, BarChart
 import { formatDate } from '@/lib/utils'
 import { TeacherForm } from '@/components/teachers/TeacherForm'
 import { Teacher, Class, Student } from '@/types'
+import { toast } from '@/components/ui/toast'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 export default function TeachersPage() {
   const router = useRouter()
@@ -26,6 +28,17 @@ export default function TeachersPage() {
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
   const [showViewModal, setShowViewModal] = useState(false)
   const [viewTeacher, setViewTeacher] = useState<Teacher | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+  }>({
+    open: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  })
   const queryClient = useQueryClient()
 
   const { data: teachers = [], isLoading } = useQuery({
@@ -524,6 +537,16 @@ export default function TeachersPage() {
             </Card>
           </div>
         )}
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          open={confirmDialog.open}
+          onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          onConfirm={confirmDialog.onConfirm}
+          variant="destructive"
+        />
       </div>
     </DashboardLayout>
   )

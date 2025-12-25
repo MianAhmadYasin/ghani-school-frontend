@@ -19,6 +19,8 @@ import { Plus, Search, Edit, Trash2, Eye, X, FileText, Calendar, Award, BarChart
 import { formatDate } from '@/lib/utils'
 import { StudentForm } from '@/components/students/StudentForm'
 import { Student, Grade, Attendance, Class } from '@/types'
+import { toast } from '@/components/ui/toast'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 export default function StudentsPage() {
   const router = useRouter()
@@ -530,6 +532,16 @@ export default function StudentsPage() {
             onClose={() => setShowReportCardModal(false)}
           />
         )}
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          open={confirmDialog.open}
+          onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          onConfirm={confirmDialog.onConfirm}
+          variant="destructive"
+        />
       </div>
     </DashboardLayout>
   )

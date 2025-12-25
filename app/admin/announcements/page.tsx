@@ -1,22 +1,23 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertCircle, Plus, Search, Filter, Calendar, Users, Edit, Trash2, Eye } from "lucide-react";
-import { announcementService, Announcement, AnnouncementCreate } from "@/services/announcementService";
+import { announcementService, Announcement, AnnouncementCreate, TargetAudience, Priority } from "@/services/announcementService";
 import { toast } from "@/components/ui/toast";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 interface AnnouncementFormData {
   title: string;
   content: string;
-  target_audience: string;
-  priority: string;
+  target_audience: TargetAudience;
+  priority: Priority;
   start_date: Date;
   end_date?: Date;
   is_active: boolean;
@@ -48,6 +49,10 @@ export default function AnnouncementsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string | null }>({
+    open: false,
+    id: null,
+  });
 
   // Statistics
   const stats = {
@@ -61,28 +66,28 @@ export default function AnnouncementsPage() {
     }).length,
   };
 
-  useEffect(() => {
-    fetchAnnouncements();
-  }, []);
+  // Helper type for Axios-like errors (avoid `any`)
+  type AxiosErrorLike = { response?: { data?: { detail?: string; message?: string } } };
 
-  useEffect(() => {
-    filterAnnouncements();
-  }, [announcements, searchTerm, priorityFilter, audienceFilter, statusFilter]);
-
-  const fetchAnnouncements = async () => {
+  const fetchAnnouncements = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await announcementService.getAll();
       setAnnouncements(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as AxiosErrorLike;
       console.error("Failed to fetch announcements:", error);
-      toast.error(error.response?.data?.detail || "Failed to fetch announcements");
+      toast.error(err.response?.data?.detail || "Failed to fetch announcements");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const filterAnnouncements = () => {
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
+  const filterAnnouncements = useCallback(() => {
     let filtered = announcements;
 
     if (searchTerm) {
@@ -107,25 +112,30 @@ export default function AnnouncementsPage() {
     }
 
     setFilteredAnnouncements(filtered);
+  }, [announcements, searchTerm, priorityFilter, audienceFilter, statusFilter]);
+
+  useEffect(() => {
+    filterAnnouncements();
+  }, [filterAnnouncements]);
+
+  const handleDeleteAnnouncement = (id: string) => {
+    setDeleteConfirm({ open: true, id });
   };
 
-  const handleDeleteAnnouncement = async (id: string) => {
-    setConfirmDialog({
-      open: true,
-      title: 'Delete Announcement',
-      description: 'Are you sure you want to delete this announcement? This action cannot be undone.',
-      onConfirm: () => {
-        try {
-          await announcementService.delete(id);
-          setAnnouncements(announcements.filter(a => a.id !== id));
-          toast.success("Announcement deleted successfully");
-        } catch (error: any) {
-          console.error("Failed to delete announcement:", error);
-          toast.error(error.response?.data?.detail || "Failed to delete announcement");
-        }
-      },
-    })
-  }
+  const confirmDelete = async () => {
+    if (!deleteConfirm.id) return;
+    try {
+      await announcementService.delete(deleteConfirm.id);
+      setAnnouncements(announcements.filter(a => a.id !== deleteConfirm.id));
+      toast.success("Announcement deleted successfully");
+      setDeleteConfirm({ open: false, id: null });
+    } catch (error: unknown) {
+      const err = error as AxiosErrorLike;
+      console.error("Failed to delete announcement:", error);
+      toast.error(err.response?.data?.detail || "Failed to delete announcement");
+      setDeleteConfirm({ open: false, id: null });
+    }
+  };
 
   const handleCreateAnnouncement = () => {
     setEditingAnnouncement(null);
@@ -144,8 +154,8 @@ export default function AnnouncementsPage() {
       const announcementData: AnnouncementCreate = {
         title: data.title,
         content: data.content,
-        target_audience: data.target_audience as any,
-        priority: data.priority as any,
+        target_audience: data.target_audience,
+        priority: data.priority,
         start_date: data.start_date.toISOString().split('T')[0],
         end_date: data.end_date ? data.end_date.toISOString().split('T')[0] : undefined,
         is_active: data.is_active,
@@ -163,9 +173,10 @@ export default function AnnouncementsPage() {
       
       setIsFormOpen(false);
       setEditingAnnouncement(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as AxiosErrorLike;
       console.error("Failed to save announcement:", error);
-      toast.error(error.response?.data?.detail || "Failed to save announcement");
+      toast.error(err.response?.data?.detail || "Failed to save announcement");
     } finally {
       setIsSubmitting(false);
     }
@@ -388,6 +399,18 @@ export default function AnnouncementsPage() {
         )}
       </div>
 
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ open, id: deleteConfirm.id })}
+        title="Delete Announcement"
+        description="Are you sure you want to delete this announcement? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        variant="destructive"
+      />
+
       {/* Announcement Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -494,7 +517,7 @@ function AnnouncementFormDialog({
           <label className="text-sm font-medium">Target Audience *</label>
           <Select
             value={formData.target_audience}
-            onValueChange={(value) => setFormData({ ...formData, target_audience: value })}
+            onValueChange={(value) => setFormData({ ...formData, target_audience: value as TargetAudience })}
           >
             <SelectTrigger>
               <SelectValue />
@@ -513,7 +536,7 @@ function AnnouncementFormDialog({
           <label className="text-sm font-medium">Priority *</label>
           <Select
             value={formData.priority}
-            onValueChange={(value) => setFormData({ ...formData, priority: value })}
+            onValueChange={(value) => setFormData({ ...formData, priority: value as Priority })}
           >
             <SelectTrigger>
               <SelectValue />

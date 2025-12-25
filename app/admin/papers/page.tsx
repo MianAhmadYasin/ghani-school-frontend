@@ -59,6 +59,17 @@ export default function PapersPage() {
   const [selectedPaperForApproval, setSelectedPaperForApproval] = useState<Paper | null>(null);
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+  }>({
+    open: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  });
   const queryClient = useQueryClient();
 
   // Fetch pending papers
@@ -665,6 +676,16 @@ export default function PapersPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onConfirm={confirmDialog.onConfirm}
+        variant="destructive"
+      />
     </div>
     </DashboardLayout>
   );
@@ -763,7 +784,7 @@ function PaperFormDialog({
     }
 
     // If there's a new file, simulate upload (in real app, upload to storage)
-    let finalFormData = { ...formData };
+    const finalFormData = { ...formData };
     
     if (uploadedFile) {
       setIsUploading(true);
