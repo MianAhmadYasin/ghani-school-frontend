@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { 
   Users, GraduationCap, BookOpen, DollarSign, TrendingUp, Calendar, AlertCircle, CheckCircle,
   UserCheck, UserX, Clock, Award, Target, Activity, ArrowUpRight, ArrowDownRight,
-  FileText, Bell, Settings, BarChart3, RefreshCw
+  Bell, Settings, BarChart3, RefreshCw
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { studentService } from '@/services/studentService'
@@ -17,11 +17,12 @@ import { attendanceService } from '@/services/attendanceService'
 import { financeService } from '@/services/financeService'
 import { announcementService } from '@/services/announcementService'
 import { useSettings } from '@/contexts/SettingsContext'
+import { Student, Class, Teacher, Grade, Attendance, Expense, Donation, Announcement } from '@/types'
 import Link from 'next/link'
 import { useQueryClient } from '@tanstack/react-query'
 
 export default function AdminDashboard() {
-  const { schoolName, currentAcademicYear, getSetting } = useSettings()
+  const { schoolName, currentAcademicYear } = useSettings()
   const queryClient = useQueryClient()
 
   // Refresh all data
@@ -32,12 +33,12 @@ export default function AdminDashboard() {
   // Fetch all data - filter by current academic year if available
   const academicYearFilter = currentAcademicYear?.year_name || new Date().getFullYear().toString()
   
-  const { data: students = [] } = useQuery({
+  const { data: students = [] } = useQuery<Student[]>({
     queryKey: ['students'],
     queryFn: () => studentService.getStudents({ limit: 1000 }),
   })
 
-  const { data: classes = [] } = useQuery({
+  const { data: classes = [] } = useQuery<Class[]>({
     queryKey: ['classes', academicYearFilter],
     queryFn: () => classService.getClasses({ 
       academic_year: academicYearFilter,
@@ -45,12 +46,12 @@ export default function AdminDashboard() {
     }),
   })
 
-  const { data: teachers = [] } = useQuery({
+  const { data: teachers = [] } = useQuery<Teacher[]>({
     queryKey: ['teachers'],
     queryFn: () => teacherService.getTeachers({ limit: 1000 }),
   })
 
-  const { data: grades = [] } = useQuery({
+  const { data: grades = [] } = useQuery<Grade[]>({
     queryKey: ['grades', academicYearFilter],
     queryFn: () => gradeService.getGrades({ 
       academic_year: academicYearFilter,
@@ -58,75 +59,75 @@ export default function AdminDashboard() {
     }),
   })
 
-  const { data: attendanceRecords = [] } = useQuery({
+  const { data: attendanceRecords = [] } = useQuery<Attendance[]>({
     queryKey: ['attendance-recent'],
     queryFn: () => attendanceService.getAttendance({ limit: 1000 }),
   })
 
-  const { data: expenses = [] } = useQuery({
+  const { data: expenses = [] } = useQuery<Expense[]>({
     queryKey: ['expenses'],
     queryFn: () => financeService.getExpenses({}),
   })
 
-  const { data: donations = [] } = useQuery({
+  const { data: donations = [] } = useQuery<Donation[]>({
     queryKey: ['donations'],
     queryFn: () => financeService.getDonations({}),
   })
 
-  const { data: announcements = [] } = useQuery({
+  const { data: announcements = [] } = useQuery<Announcement[]>({
     queryKey: ['announcements-active'],
     queryFn: () => announcementService.getAll({ is_active: true, limit: 5 }),
   })
 
   // Calculate comprehensive statistics
-  const activeStudents = students.filter((s: any) => s.status === 'active').length
-  const activeTeachers = teachers.filter((t: any) => t.status === 'active').length
+  const activeStudents = students.filter((s: Student) => s.status === 'active').length
+  const activeTeachers = teachers.filter((t: Teacher) => t.status === 'active').length
   
   // Today's attendance
   const today = new Date().toISOString().split('T')[0]
-  const todayAttendance = attendanceRecords.filter((a: any) => a.date === today)
-  const presentToday = todayAttendance.filter((a: any) => a.status === 'present').length
-  const absentToday = todayAttendance.filter((a: any) => a.status === 'absent').length
-  const lateToday = todayAttendance.filter((a: any) => a.status === 'late').length
+  const todayAttendance = attendanceRecords.filter((a: Attendance) => a.date === today)
+  const presentToday = todayAttendance.filter((a: Attendance) => a.status === 'present').length
+  const absentToday = todayAttendance.filter((a: Attendance) => a.status === 'absent').length
+  const lateToday = todayAttendance.filter((a: Attendance) => a.status === 'late').length
   const attendanceRate = todayAttendance.length > 0 
     ? Math.round((presentToday / todayAttendance.length) * 100) 
     : 0
 
   // This month's attendance
   const currentMonth = new Date().getMonth()
-  const monthAttendance = attendanceRecords.filter((a: any) => {
+  const monthAttendance = attendanceRecords.filter((a: Attendance) => {
     const recordMonth = new Date(a.date).getMonth()
     return recordMonth === currentMonth
   })
   const monthAttendanceRate = monthAttendance.length > 0
-    ? Math.round((monthAttendance.filter((a: any) => a.status === 'present').length / monthAttendance.length) * 100)
+    ? Math.round((monthAttendance.filter((a: Attendance) => a.status === 'present').length / monthAttendance.length) * 100)
     : 0
   
   // Academic performance
-  const passingGrades = grades.filter((g: any) => parseFloat(g.marks) >= 50).length
+  const passingGrades = grades.filter((g: Grade) => Number(g.marks) >= 50).length
   const failingGrades = grades.length - passingGrades
   const averageGrade = grades.length > 0 
-    ? (grades.reduce((sum: number, g: any) => sum + parseFloat(g.marks), 0) / grades.length).toFixed(1)
+    ? (grades.reduce((sum: number, g: Grade) => sum + Number(g.marks), 0) / grades.length).toFixed(1)
     : '0'
   const passRate = grades.length > 0 
     ? Math.round((passingGrades / grades.length) * 100)
     : 0
 
   // Financial overview
-  const totalExpenses = expenses.reduce((sum: number, e: any) => sum + parseFloat(e.amount), 0)
-  const totalDonations = donations.reduce((sum: number, d: any) => sum + parseFloat(d.amount), 0)
+  const totalExpenses = expenses.reduce((sum: number, e: Expense) => sum + Number(e.amount), 0)
+  const totalDonations = donations.reduce((sum: number, d: Donation) => sum + Number(d.amount), 0)
   const financialBalance = totalDonations - totalExpenses
 
   // This month's finances
-  const thisMonthExpenses = expenses.filter((e: any) => {
+  const thisMonthExpenses = expenses.filter((e: Expense) => {
     const expenseMonth = new Date(e.date).getMonth()
     return expenseMonth === currentMonth
-  }).reduce((sum: number, e: any) => sum + parseFloat(e.amount), 0)
+  }).reduce((sum: number, e: Expense) => sum + Number(e.amount), 0)
 
-  const thisMonthIncome = donations.filter((d: any) => {
+  const thisMonthIncome = donations.filter((d: Donation) => {
     const donationMonth = new Date(d.date).getMonth()
     return donationMonth === currentMonth
-  }).reduce((sum: number, d: any) => sum + parseFloat(d.amount), 0)
+  }).reduce((sum: number, d: Donation) => sum + Number(d.amount), 0)
 
   // Main statistics cards
   const mainStats = [
@@ -478,7 +479,7 @@ export default function AdminDashboard() {
           <CardContent>
             {announcements.length > 0 ? (
               <div className="space-y-3">
-                {announcements.slice(0, 5).map((announcement: any) => (
+                {announcements.slice(0, 5).map((announcement: Announcement) => (
                   <div key={announcement.id} className="flex items-start gap-3 p-3 border rounded-lg hover:border-blue-500 transition-colors">
                     <Bell className="h-5 w-5 text-blue-600 mt-0.5" />
                     <div className="flex-1">

@@ -10,16 +10,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toast'
 import {
-  Calendar, Users, Clock, Upload, Download, Settings, Calculator, 
-  CheckCircle, XCircle, AlertCircle, Plus, Edit2, Trash2, Eye,
-  FileSpreadsheet, DollarSign, TrendingUp, TrendingDown, Save, X,
+  Calendar, Users, Clock, Upload, Settings,
+  CheckCircle, XCircle, AlertCircle, Plus, Edit2, Eye,
+  TrendingUp, Save, X,
   FileText, BarChart3
 } from 'lucide-react'
 import { attendanceService } from '@/services/attendanceService'
 import { teacherService } from '@/services/teacherService'
 import { studentService } from '@/services/studentService'
 import { classService } from '@/services/classService'
-import { AttendanceStatus } from '@/types'
+import { AttendanceStatus, Teacher, Class as ClassType, Student, Attendance } from '@/types'
 
 type TabId = 'teachers' | 'students' | 'bulk' | 'reports' | 'settings'
 
@@ -30,22 +30,25 @@ export default function AttendancePage() {
   const [activeTab, setActiveTab] = useState<TabId>('teachers')
   const [selectedDate, setSelectedDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0])
   const [selectedClass, setSelectedClass] = useState<string>(searchParams.get('class_id') || '')
-  const [showBulkForm, setShowBulkForm] = useState(false)
+  const [, setShowBulkForm] = useState(false)
   const [showCSVUpload, setShowCSVUpload] = useState(false)
-  const [editingAttendance, setEditingAttendance] = useState<any>(null)
+  const [editingAttendance, setEditingAttendance] = useState<Attendance | null>(null)
+
+  // Helper type for axios-like errors
+  type AxiosErrorLike = { message?: string; response?: { data?: { detail?: string; message?: string } } }
 
   // Fetch data
-  const { data: teachers = [] } = useQuery({
+  const { data: teachers = [] } = useQuery<Teacher[]>({
     queryKey: ['teachers'],
     queryFn: () => teacherService.getTeachers({ limit: 1000 }),
   })
 
-  const { data: classes = [] } = useQuery({
+  const { data: classes = [] } = useQuery<ClassType[]>({
     queryKey: ['classes'],
     queryFn: () => classService.getClasses({ limit: 1000 }),
   })
 
-  const { data: students = [] } = useQuery({
+  const { data: students = [] } = useQuery<Student[]>({
     queryKey: ['students', selectedClass],
     queryFn: () => studentService.getStudents({ 
       class_id: selectedClass || undefined,
@@ -54,7 +57,7 @@ export default function AttendancePage() {
     enabled: !!selectedClass
   })
 
-  const { data: attendanceRecords = [] } = useQuery({
+  const { data: attendanceRecords = [] } = useQuery<Attendance[]>({
     queryKey: ['attendance', selectedDate],
     queryFn: () => attendanceService.getAttendance({ 
       date_from: selectedDate, 
@@ -86,60 +89,17 @@ export default function AttendancePage() {
       queryClient.invalidateQueries({ queryKey: ['attendance'] })
       toast.success('Attendance marked successfully!')
     },
-    onError: (error: any) => {
-      const errorMessage = error?.message || 
-                          error?.response?.data?.message || 
-                          error?.response?.data?.detail || 
+    onError: (error: unknown) => {
+      const err = error as AxiosErrorLike
+      const errorMessage = err.message || 
+                          err.response?.data?.message || 
+                          err.response?.data?.detail || 
                           'Failed to mark attendance'
       toast.error(errorMessage)
       console.error('Attendance marking error:', error)
     }
   })
-
-  // Bulk attendance mutation
-  const bulkAttendanceMutation = useMutation({
-    mutationFn: (attendances: Array<{
-      user_id: string
-      date: string
-      status: AttendanceStatus
-      remarks?: string
-    }>) => {
-      // Validate all dates are not in the future
-      const today = new Date()
-      today.setHours(23, 59, 59, 999)
-      
-      for (const att of attendances) {
-        const attendanceDate = new Date(att.date)
-        if (attendanceDate > today) {
-          throw new Error(`Attendance date ${att.date} cannot be in the future`)
-        }
-      }
-      
-      return attendanceService.markBulkAttendance(attendances)
-    },
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] })
-      
-      // Show detailed success message if there were errors
-      if (result.errors && result.errors.length > 0) {
-        toast.success(
-          `Bulk attendance completed: ${result.success_count}/${result.total_count} successful. Some records had errors.`
-        )
-      } else {
-        toast.success('Bulk attendance marked successfully!')
-      }
-      
-      setShowBulkForm(false)
-    },
-    onError: (error: any) => {
-      const errorMessage = error?.message || 
-                          error?.response?.data?.message || 
-                          error?.response?.data?.detail || 
-                          'Failed to mark bulk attendance'
-      toast.error(errorMessage)
-      console.error('Bulk attendance error:', error)
-    }
-  })
+  
 
   // Update attendance mutation
   const updateAttendanceMutation = useMutation({
@@ -150,8 +110,9 @@ export default function AttendancePage() {
       toast.success('Attendance updated successfully!')
       setEditingAttendance(null)
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.detail || 'Failed to update attendance')
+    onError: (error: unknown) => {
+      const err = error as AxiosErrorLike
+      toast.error(err.response?.data?.detail || 'Failed to update attendance')
     }
   })
 
@@ -277,7 +238,7 @@ export default function AttendancePage() {
                 className="flex h-10 w-48 rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="">Select a class</option>
-                {classes.map((classItem: any) => (
+                {classes.map((classItem: ClassType) => (
                   <option key={classItem.id} value={classItem.id}>
                     {classItem.name} - {classItem.section}
                   </option>
@@ -333,7 +294,7 @@ export default function AttendancePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {teachers.map((teacher: any) => {
+                      {teachers.map((teacher: Teacher) => {
                         const attendance = getAttendanceForUser(teacher.user_id)
                         return (
                           <tr key={teacher.id} className="border-b hover:bg-gray-50">
@@ -439,7 +400,7 @@ export default function AttendancePage() {
             </CardHeader>
             <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {classes.map((classItem: any) => (
+                      {classes.map((classItem: ClassType) => (
                         <div 
                           key={classItem.id} 
                           className="p-4 border rounded-lg hover:border-blue-500 transition-colors cursor-pointer"
@@ -499,7 +460,7 @@ export default function AttendancePage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {students.map((student: any) => {
+                          {students.map((student: Student) => {
                             const attendance = getAttendanceForUser(student.user_id)
                             return (
                               <tr key={student.id} className="border-b hover:bg-gray-50">
@@ -692,7 +653,7 @@ export default function AttendancePage() {
                         variant="outline"
                         onClick={() => router.push(`/admin/reports?type=attendance&date_from=${selectedDate}`)}
                       >
-                        Today's Report
+                        Today&apos;s Report
                       </Button>
                       <Button 
                         size="sm"

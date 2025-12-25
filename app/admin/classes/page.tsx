@@ -9,16 +9,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { classService } from '@/services/classService'
-import { studentService } from '@/services/studentService'
 import { teacherService } from '@/services/teacherService'
 import { gradeService } from '@/services/gradeService'
 import { attendanceService } from '@/services/attendanceService'
 import { EntityLink } from '@/components/shared/EntityLink'
-import { Plus, Search, Edit, Trash2, Users, Eye, X, Calendar, FileText, BarChart3, GraduationCap } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Users, Eye, X, Calendar, FileText, BarChart3 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { ClassForm } from '@/components/classes/ClassForm'
 import { StudentEnrollment } from '@/components/classes/StudentEnrollment'
-import { Class, Teacher, Student, Grade } from '@/types'
+import { Class, Student, Grade, Attendance } from '@/types'
 import { useEffect } from 'react'
 import { toast } from '@/components/ui/toast'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
@@ -33,7 +32,7 @@ export default function ClassesPage() {
   const [viewClass, setViewClass] = useState<Class | null>(null)
   const [showEnrollment, setShowEnrollment] = useState(false)
   const [enrollmentClass, setEnrollmentClass] = useState<Class | null>(null)
-  const [teachers, setTeachers] = useState<Teacher[]>([])
+  
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
     title: string
@@ -95,7 +94,6 @@ export default function ClassesPage() {
     queryKey: ['class-attendance', viewClass?.id],
     queryFn: () => {
       if (!viewClass || !classStudents.length) return []
-      const studentIds = classStudents.map((s: Student) => s.user_id).filter(Boolean)
       return attendanceService.getAttendance({ limit: 1000 })
     },
     enabled: !!viewClass?.id && classStudents.length > 0,
@@ -107,8 +105,9 @@ export default function ClassesPage() {
       queryClient.invalidateQueries({ queryKey: ['classes'] })
       toast.success('Class deleted successfully')
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete class')
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } }
+      toast.error(err.response?.data?.detail || 'Failed to delete class')
     }
   })
 
@@ -363,7 +362,7 @@ export default function ClassesPage() {
                             <p className="text-xs text-gray-600">Avg Attendance</p>
                             <p className="text-2xl font-bold text-green-600">
                               {classAttendance.length > 0 
-                                ? Math.round((classAttendance.filter((a: any) => a.status === 'present').length / classAttendance.length) * 100)
+                                ? Math.round((classAttendance.filter((a: Attendance) => a.status === 'present').length / classAttendance.length) * 100)
                                 : 0}%
                             </p>
                           </div>
