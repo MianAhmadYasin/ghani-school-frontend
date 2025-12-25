@@ -15,9 +15,9 @@ import { classService } from '@/services/classService'
 import { gradeService } from '@/services/gradeService'
 import { attendanceService } from '@/services/attendanceService'
 import { financeService } from '@/services/financeService'
-import { announcementService } from '@/services/announcementService'
+import { announcementService, type Announcement } from '@/services/announcementService'
 import { useSettings } from '@/contexts/SettingsContext'
-import { Student, Class, Teacher, Grade, Attendance, Expense, Donation, Announcement } from '@/types'
+import { Student, Class, Teacher, Grade, Attendance, Expense, Donation } from '@/types'
 import Link from 'next/link'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -165,7 +165,7 @@ export default function AdminDashboard() {
       link: '/admin/classes'
     },
     {
-      title: 'Today\'s Attendance',
+    title: 'Today&apos;s Attendance',
       value: `${attendanceRate}%`,
       subtitle: `${presentToday} present, ${absentToday} absent`,
       icon: Calendar,

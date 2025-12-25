@@ -273,7 +273,7 @@ export default function PrincipalDashboard() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Principal Dashboard</h1>
           <p className="text-gray-600 mt-1">
-            Welcome back, {profile?.name || user?.full_name || 'Principal'}! Here's your school overview.
+            Welcome back, {profile?.name || user?.full_name || 'Principal'}! Here&apos;s your school overview.
           </p>
         </div>
 

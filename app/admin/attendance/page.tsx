@@ -414,7 +414,7 @@ export default function AttendancePage() {
                               <h4 className="font-medium">{classItem.name} - {classItem.section}</h4>
                               <p className="text-sm text-gray-600">{classItem.academic_year}</p>
                               <p className="text-xs text-gray-500">
-                                Teacher: {classItem.teacher?.user?.full_name || 'Not assigned'}
+                                Teacher: {teachers.find(t => t.id === classItem.teacher_id)?.user?.full_name || 'Not assigned'}
                               </p>
                             </div>
                           </div>
@@ -709,7 +709,7 @@ export default function AttendancePage() {
               <select
                     id="status"
                     value={editingAttendance.status}
-                    onChange={(e) => setEditingAttendance({...editingAttendance, status: e.target.value})}
+                    onChange={(e) => setEditingAttendance({...editingAttendance, status: e.target.value as AttendanceStatus})}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                 <option value="present">Present</option>
